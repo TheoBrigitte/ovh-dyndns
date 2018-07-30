@@ -1,0 +1,8 @@
+[Unit]
+Description=Run ovh-dyndns every 6 hour.
+
+[Timer]
+OnUnitActiveSec=6h
+
+[Install]
+WantedBy=timers.target

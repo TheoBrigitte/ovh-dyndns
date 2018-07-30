@@ -1,0 +1,10 @@
+[Unit]
+Description=ovh-dyndns, update ovh dns record with public hostname.
+
+[Service]
+User=ovh-dyndns
+Type=oneshot
+ExecStart=/usr/local/bin/ovh-dyndns
+
+[Install]
+WantedBy=multi-user.target
