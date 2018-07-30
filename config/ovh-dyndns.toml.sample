@@ -1,0 +1,3 @@
+zone = "example.com"
+record-type = "CNAME"
+subdomains = "www,ftp"

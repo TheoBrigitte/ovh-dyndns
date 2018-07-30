@@ -1,0 +1,7 @@
+[default]
+endpoint = ovh-eu
+
+[ovh-eu]
+application_key = appKeySample0000
+application_secret = appSecretSample00000000000000000
+;consumer_key = consumerKey000000000000000000000
