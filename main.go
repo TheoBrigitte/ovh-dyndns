@@ -153,37 +153,45 @@ func main() {
 			log.Fatal(err)
 			return
 		}
-		fields["record ID"] = id
-
-		// Read the dns record
+		fields["ID"] = id
 		fields["status"] = "reading"
 		log.WithFields(fields).Info("dns record")
+
+		// Read the dns record
 		record, err := ovhClient.GetRecord(zone, id)
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
 		fields["record"] = record
+		fields["status"] = "updating"
 		log.WithFields(fields).Info("dns record")
 
 		// Update the dns record
-		fields["status"] = "updating"
+		var target string
 		switch record.FieldType {
 		case "CNAME":
-			record.Target = hostnames[0]
+			target = hostnames[0]
 		case "A":
-			record.Target = ipAdresse
+			target = ipAdresse
 		default:
 			log.Fatalf("unsuported record type: %q", record.FieldType)
 			return
 		}
+		// Skip update when target is the same.
+		if record.Target == target {
+			fields["status"] = "ok"
+			log.WithFields(fields).Info("dns record")
+			continue
+		}
 
+		record.Target = target
 		err = ovhClient.UpdateRecord(zone, id, *record)
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
-		fields["status"] = "done"
+		fields["status"] = "updated"
 		log.WithFields(fields).Info("dns record")
 	}
 
