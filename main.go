@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 
 	"github.com/ovh/go-ovh/ovh"
@@ -16,6 +17,10 @@ import (
 
 const (
 	configFileName = "ovh-dyndns"
+)
+
+var (
+	Version = "n/a"
 )
 
 func main() {
@@ -33,10 +38,16 @@ func main() {
 		flag.String("zone", "", "DNS zone name (e.g. example.com)")
 		flag.String("record-type", "", "DNS record typ (e.g. CNAME)")
 		flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
+		flag.Bool("version", false, "print version and exit")
 
 		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 		pflag.Parse()
 		viper.BindPFlags(pflag.CommandLine)
+
+		if viper.GetBool("version") {
+			fmt.Printf("version: %s\n", Version)
+			return
+		}
 
 		// Load config file
 		viper.SetConfigName(configFileName)
