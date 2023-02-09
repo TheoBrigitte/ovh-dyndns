@@ -56,7 +56,7 @@ func main() {
 		viper.AddConfigPath(".")
 		err = viper.ReadInConfig()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("viper.ReadInConfig %v", err)
 			return
 		}
 
@@ -79,7 +79,7 @@ func main() {
 		// Create a client using credentials from config files or environment variables
 		c, err := ovh.NewDefaultClient()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ovh.NewDefaultClient %v", err)
 			return
 		}
 
@@ -94,7 +94,7 @@ func main() {
 		log.WithFields(fields).Info("customer key")
 		res, err := ovhClient.GenerateConsumerKey()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ovhClient.GenerateConsumerKey %v", err)
 			return
 		}
 		fields["status"] = "done"
@@ -113,7 +113,7 @@ func main() {
 		log.WithFields(fields).Info("ip adresse")
 		ipAdresse, err = ip.GetPublic()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ip.GetPublic %v", err)
 			return
 		}
 		fields["status"] = "done"
@@ -131,7 +131,7 @@ func main() {
 			log.WithFields(fields).Info("hostname")
 			hostnames, err = hostname.Get(ipAdresse)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("hostname.Get %v", err)
 				return
 			}
 			fields["status"] = "done"
@@ -144,13 +144,15 @@ func main() {
 	for _, domain := range subDomains {
 		// Find the dns record.
 		fields := log.Fields{
-			"status": "finding",
-			"domain": domain,
+			"status":     "finding",
+			"domain":     domain,
+			"zone":       zone,
+			"recordType": recordType,
 		}
 		log.WithFields(fields).Info("dns record")
 		id, err := ovhClient.FindRecord(zone, recordType, domain)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ovhClient.FindRecord %v", err)
 			return
 		}
 		fields["ID"] = id
@@ -160,7 +162,7 @@ func main() {
 		// Read the dns record
 		record, err := ovhClient.GetRecord(zone, id)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ovhClient.GetRecord %v", err)
 			return
 		}
 		fields["record"] = record
@@ -188,7 +190,7 @@ func main() {
 		record.Target = target
 		err = ovhClient.UpdateRecord(zone, id, *record)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ovhClient.UpdateRecord %v", err)
 			return
 		}
 		fields["status"] = "updated"
