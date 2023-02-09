@@ -51,7 +51,7 @@ func main() {
 
 		// Load config file
 		viper.SetConfigName(configFileName)
-		viper.AddConfigPath("/etc/")
+		viper.AddConfigPath("/etc/ovh-dyndns")
 		viper.AddConfigPath("$HOME/")
 		viper.AddConfigPath(".")
 		err = viper.ReadInConfig()
