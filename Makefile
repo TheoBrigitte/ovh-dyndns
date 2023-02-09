@@ -19,7 +19,7 @@ install:
 	GOOS=${OSTYPE} CGO_ENABLED=0 go install -v -ldflags="-s -w -X main.Version=${VERSION}" ${PKG}
 
 test:
-	@go test -short ${PKG_LIST}
+	@go test -v ${PKG_LIST}
 
 vet:
 	@go vet ${PKG_LIST}
