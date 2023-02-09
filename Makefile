@@ -12,8 +12,11 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 
 all: bin 
 
-bin:
-	GOOS=${OSTYPE} CGO_ENABLED=0 go build -i -v -o ${BIN} -ldflags="-s -w -X main.Version=${VERSION}" ${PKG}
+build:
+	GOOS=${OSTYPE} CGO_ENABLED=0 go build -v -o ${BIN} -ldflags="-s -w -X main.Version=${VERSION}" ${PKG}
+
+install:
+	GOOS=${OSTYPE} CGO_ENABLED=0 go install -v -ldflags="-s -w -X main.Version=${VERSION}" ${PKG}
 
 test:
 	@go test -short ${PKG_LIST}
@@ -29,4 +32,4 @@ lint:
 clean:
 	-@rm ${BIN}
 
-.PHONY: run operator vet lint build
+.PHONY: build install test vet lint clean
