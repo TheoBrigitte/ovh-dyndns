@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/glendc/go-external-ip v0.1.0
-	github.com/ovh/go-ovh v0.0.0-20180717143715-c3e61035ea66
+	github.com/ovh/go-ovh v1.3.0
 	github.com/sirupsen/logrus v1.0.6
 	github.com/spf13/pflag v1.0.1
 	github.com/spf13/viper v1.0.2
@@ -28,6 +28,6 @@ require (
 	golang.org/x/text v0.3.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
-	gopkg.in/ini.v1 v1.38.1 // indirect
+	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.2.1 // indirect
 )
