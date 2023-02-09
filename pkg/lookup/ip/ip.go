@@ -2,6 +2,8 @@ package ip
 
 import (
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 )
 
@@ -11,9 +13,11 @@ type IPify struct {
 	IP string `json:"ip"`
 }
 
+const errInvalidIP = "invalid IP address format"
+
 // Get retrieve public facing ip adresse.
 func GetPublic() (string, error) {
-	var ip IPify
+	var ipify IPify
 
 	res, err := http.Get(ipifyURL)
 	if err != nil {
@@ -22,10 +26,15 @@ func GetPublic() (string, error) {
 
 	decoder := json.NewDecoder(res.Body)
 
-	err = decoder.Decode(&ip)
+	err = decoder.Decode(&ipify)
 	if err != nil {
 		return "", err
 	}
 
-	return ip.IP, nil
+	ip := net.ParseIP(ipify.IP)
+	if ip == nil {
+		return "", fmt.Errorf("%v : %v", errInvalidIP, ipify.IP)
+	}
+
+	return ipify.IP, nil
 }
