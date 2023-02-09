@@ -3,6 +3,7 @@ module github.com/TheoBrigitte/ovh-dyndns
 go 1.19
 
 require (
+	github.com/glendc/go-external-ip v0.1.0
 	github.com/ovh/go-ovh v0.0.0-20180717143715-c3e61035ea66
 	github.com/sirupsen/logrus v1.0.6
 	github.com/spf13/pflag v1.0.1
