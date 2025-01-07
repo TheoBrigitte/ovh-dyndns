@@ -17,6 +17,7 @@ import (
 
 const (
 	configFileName = "ovh-dyndns"
+	statusDone     = "done"
 )
 
 var (
@@ -101,7 +102,7 @@ func main() {
 			log.Fatalf("ovhClient.GenerateConsumerKey %v", err)
 			return
 		}
-		fields["status"] = "done"
+		fields["status"] = statusDone
 		log.WithFields(fields).Info("customer key")
 
 		log.Printf("response\n%v", res)
@@ -120,7 +121,7 @@ func main() {
 			log.Fatalf("ip.GetPublic %v", err)
 			return
 		}
-		fields["status"] = "done"
+		fields["status"] = statusDone
 		fields["ip"] = ipAdresse
 		log.WithFields(fields).Info("ip adresse")
 	}
@@ -138,7 +139,7 @@ func main() {
 				log.Fatalf("hostname.Get %v", err)
 				return
 			}
-			fields["status"] = "done"
+			fields["status"] = statusDone
 			fields["hostname"] = hostnames[0]
 			log.WithFields(fields).Info("hostname")
 		}
