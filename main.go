@@ -42,7 +42,11 @@ func main() {
 
 		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 		pflag.Parse()
-		viper.BindPFlags(pflag.CommandLine)
+		err = viper.BindPFlags(pflag.CommandLine)
+		if err != nil {
+			log.Fatalf("viper.BindPFlags %v", err)
+			return
+		}
 
 		if viper.GetBool("version") {
 			fmt.Printf("version: %s\n", Version)
