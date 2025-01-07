@@ -9,7 +9,11 @@ const errInvalidIP = "invalid IP address format"
 // Get retrieve public facing ip adresse.
 func GetPublic() (string, error) {
 	consensus := externalip.DefaultConsensus(nil, nil)
-	consensus.UseIPProtocol(4)
+	err := consensus.UseIPProtocol(4)
+	if err != nil {
+		return "", err
+	}
+
 	ip, err := consensus.ExternalIP()
 	if err != nil {
 		return "", err
