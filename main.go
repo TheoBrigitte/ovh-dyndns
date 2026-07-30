@@ -113,21 +113,21 @@ func main() {
 		return
 	}
 
-	// Read public IP adresse.
-	var ipAdresse string
+	// Read public IP address.
+	var ipAddress string
 	{
 		fields := log.Fields{
 			"status": "reading",
 		}
-		log.WithFields(fields).Info("ip adresse")
-		ipAdresse, err = ip.GetPublic()
+		log.WithFields(fields).Info("ip address")
+		ipAddress, err = ip.GetPublic()
 		if err != nil {
 			log.Fatalf("ip.GetPublic %v", err)
 			return
 		}
 		fields["status"] = statusDone
-		fields["ip"] = ipAdresse
-		log.WithFields(fields).Info("ip adresse")
+		fields["ip"] = ipAddress
+		log.WithFields(fields).Info("ip address")
 	}
 
 	// Lookup hostname.
@@ -138,7 +138,7 @@ func main() {
 				"status": "reading",
 			}
 			log.WithFields(fields).Info("hostname")
-			hostnames, err = hostname.Get(ipAdresse)
+			hostnames, err = hostname.Get(ipAddress)
 			if err != nil {
 				log.Fatalf("hostname.Get %v", err)
 				return
@@ -184,7 +184,7 @@ func main() {
 		case "CNAME":
 			target = hostnames[0]
 		case "A":
-			target = ipAdresse
+			target = ipAddress
 		default:
 			log.Fatalf("unsuported record type: %q", record.FieldType)
 			return
