@@ -67,7 +67,7 @@ func main() {
 	run()
 }
 
-func run() error {
+func run() {
 	var (
 		zone                string
 		recordType          string
@@ -96,7 +96,7 @@ func run() error {
 		c, err := ovh.NewDefaultClient()
 		if err != nil {
 			log.Fatalf("Initializing OVH client %v", err)
-			return nil
+			return
 		}
 
 		ovhClient = client.New(*c)
@@ -108,11 +108,11 @@ func run() error {
 		res, err := ovhClient.GenerateConsumerKey()
 		if err != nil {
 			log.Fatalf("Generating consumer key %v", err)
-			return nil
+			return
 		}
 		log.Info("Successfully generated consumer key")
 		log.Printf("response\n%v", res)
-		return nil
+		return
 	}
 
 	// Read public IP address.
@@ -122,7 +122,7 @@ func run() error {
 		ipAddress, err = ip.GetPublic()
 		if err != nil {
 			log.Fatalf("Reading public IP address %v", err)
-			return nil
+			return
 		}
 		fields := log.Fields{"ip": ipAddress}
 		log.WithFields(fields).Info("Found public IP address")
@@ -136,7 +136,7 @@ func run() error {
 			hostnames, err = hostname.Get(ipAddress)
 			if err != nil {
 				log.Fatalf("Reading public Hostname %v", err)
-				return nil
+				return
 			}
 			fields := log.Fields{"hostnames": hostnames[0]}
 			log.WithFields(fields).Info("Found public Hostname")
@@ -222,6 +222,4 @@ func run() error {
 			log.WithFields(fields).Info("Successfully created DNS record")
 		}
 	}
-
-	return nil
 }
