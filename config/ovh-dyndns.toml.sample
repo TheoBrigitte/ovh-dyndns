@@ -1,3 +1,14 @@
+[[records]]
 zone = "example.com"
 record-type = "CNAME"
-subdomains = "www,ftp"
+subdomains = ["www", "ftp"]
+
+[[records]]
+zone = "example.com"
+record-type = "A"
+subdomains = ["home"]
+
+[[records]]
+zone = "example.net"
+record-type = "AAAA"
+subdomains = ["home"]

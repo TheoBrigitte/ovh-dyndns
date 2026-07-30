@@ -23,7 +23,17 @@ const (
 	name = "ovh-dyndns"
 
 	configFileName = "ovh-dyndns"
+
+	// recordsKey is the configuration file key holding the records table.
+	recordsKey = "records"
 )
+
+// Record is a single entry of the records table in the configuration file.
+type Record struct {
+	Zone       string   `mapstructure:"zone"`
+	RecordType string   `mapstructure:"record-type"`
+	Subdomains []string `mapstructure:"subdomains"`
+}
 
 func main() {
 	var err error
@@ -31,12 +41,6 @@ func main() {
 	// Define and process arguments.
 	flag.Bool("consumer-key", false, "generate a consumer key")
 	flag.Bool("version", false, "print version and exit")
-
-	flag.Bool("4", false, "force IPv4 address lookup")
-	flag.Bool("6", false, "force IPv6 address lookup")
-	flag.String("record-type", "", "DNS record type (e.g. CNAME)")
-	flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
-	flag.String("zone", "", "DNS zone name (e.g. example.com)")
 
 	// Parse flags and bind them to viper
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -67,33 +71,17 @@ func main() {
 		return
 	}
 
-	run()
+	var records []Record
+	err = viper.UnmarshalKey(recordsKey, &records)
+	if err != nil {
+		log.Fatalf("Parsing %s from configuration file %v", recordsKey, err)
+		return
+	}
+
+	run(records)
 }
 
-func run() {
-	var (
-		zone                string
-		recordType          string
-		generateConsumerKey bool
-		subDomains          []string
-
-		err error
-	)
-
-	// Log configuration values.
-	zone = viper.GetString("zone")
-	recordType = strings.ToUpper(viper.GetString("record-type"))
-	generateConsumerKey = viper.GetBool("consumer-key")
-	subDomains = strings.Split(viper.GetString("subdomains"), ",")
-	ipv4 := viper.GetBool("4")
-	ipv6 := viper.GetBool("6")
-
-	log.WithFields(log.Fields{
-		"zone":        zone,
-		"record-type": recordType,
-		"subdomains":  subDomains,
-	}).Info("Starting ovh-dyndns")
-
+func run(records []Record) {
 	// Create client for OVH API.
 	var ovhClient client.Client
 	{
@@ -107,7 +95,7 @@ func run() {
 		ovhClient = client.New(*c)
 	}
 
-	if generateConsumerKey {
+	if viper.GetBool("consumer-key") {
 		// Generate consumer key.
 		log.Info("Generating consumer key")
 		res, err := ovhClient.GenerateConsumerKey()
@@ -120,137 +108,162 @@ func run() {
 		return
 	}
 
-	// Read public IP address.
-	var ipAddress string
-	{
-		if ipv4 && ipv6 {
-			log.Fatal("Cannot specify both IPv4 and IPv6 flags")
-			return
-		}
-
-		log.Info("Reading public IP address")
-		if ipv6 || recordType == "AAAA" {
-			ipAddress, err = ip.GetPublicIPv6()
-		} else {
-			ipAddress, err = ip.GetPublicIPv4()
-			ipv4 = true
-		}
-		if err != nil {
-			log.Fatalf("Reading public IP address %v", err)
-			return
-		}
-		fields := log.Fields{"ip": ipAddress}
-		log.WithFields(fields).Info("Found public IP address")
+	if len(records) == 0 {
+		log.Fatalf("No %s found in configuration file %s", recordsKey, viper.ConfigFileUsed())
+		return
 	}
 
-	// Lookup hostname.
-	var hostnames []string
-	{
-		if recordType == "CNAME" {
-			log.Info("Reading public Hostname")
-			hostnames, err = hostname.Get(ipAddress)
-			if err != nil {
-				log.Fatalf("Reading public Hostname %v", err)
-				return
-			}
-			fields := log.Fields{"hostnames": hostnames[0]}
-			log.WithFields(fields).Info("Found public Hostname")
-		}
-	}
+	log.WithFields(log.Fields{"records": len(records)}).Info("Starting ovh-dyndns")
 
-	// Update dns records.
-	for _, domain := range subDomains {
-		// Find the dns record.
+	var l lookup
+	for _, r := range records {
+		recordType := strings.ToUpper(r.RecordType)
 		fields := log.Fields{
-			"domain":     domain,
-			"zone":       zone,
-			"recordType": recordType,
+			"zone":        r.Zone,
+			"record-type": recordType,
+			"subdomains":  r.Subdomains,
 		}
-		log.WithFields(fields).Info("Searching DNS record")
-		id, err := ovhClient.FindRecord(zone, recordType, domain)
+
+		// Resolve the target once per entry, all its sub domains share it.
+		target, err := l.target(recordType)
 		if err != nil {
-			if !errors.Is(err, ovherrors.RecordNotFound) {
-				log.WithFields(fields).Errorf("Searching DNS record %v", err)
-				continue
-			}
-			log.WithFields(fields).Info("DNS record not found")
-		}
-		if id != 0 {
-			// Read the dns record
-			record, err := ovhClient.GetRecord(zone, id)
-			if err != nil {
-				log.Errorf("Reading DNS record %v", err)
-				continue
-			}
-			fields["ID"] = id
-			fields["record"] = record
-			log.WithFields(fields).Info("Found DNS record")
-
-			// Update the dns record
-			var target string
-			switch record.FieldType {
-			case "CNAME":
-				// TODO: fix potential nil pointer dereference if hostnames is empty
-				target = hostnames[0]
-			case "A":
-				if ipv6 {
-					log.Errorf("Cannot update A record with IPv6 address")
-					continue
-				}
-				target = ipAddress
-			case "AAAA":
-				if ipv4 {
-					log.Errorf("Cannot update AAAA record with IPv4 address")
-					continue
-				}
-				target = ipAddress
-			default:
-				log.Errorf("Unsupported record type: %q", record.FieldType)
-				continue
-			}
-			// Skip update when target is the same.
-			if record.Target == target {
-				log.WithFields(fields).Info("Skipping DNS record, already up to date")
-				continue
-			}
-
-			record.Target = target
-
-			log.WithFields(fields).Info("Updating DNS record")
-
-			err = ovhClient.UpdateRecord(zone, id, *record)
-			if err != nil {
-				log.Errorf("Updating DNS record %v", err)
-				continue
-			}
-			log.WithFields(fields).Info("Successfully updated DNS record")
-		} else {
-			// Create the dns record
-			record := client.DNSRecord{
-				FieldType: recordType,
-				SubDomain: domain,
-			}
-			if recordType == "CNAME" {
-				record.Target = hostnames[0]
-			} else {
-				record.Target = ipAddress
-			}
-
-			fields["record"] = record
-			log.WithFields(fields).Info("Creating DNS record")
-			newRecord, err := ovhClient.CreateRecord(zone, record)
-			if err != nil {
-				log.Errorf("Creating DNS record %v", err)
-				continue
-			}
-			fields["record"] = newRecord
-			log.WithFields(fields).Info("Successfully created DNS record")
-		}
-
-		err = ovhClient.RefreshZone(zone)
-		if err != nil {
-			log.Errorf("Refreshing DNS zone %v", err)
+			log.WithFields(fields).Errorf("Resolving DNS record target %v", err)
 			continue
 		}
+
+		for _, subDomain := range r.Subdomains {
+			err = updateRecord(ovhClient, r.Zone, recordType, subDomain, target)
+			if err != nil {
+				log.WithFields(fields).Errorf("%v", err)
+			}
+		}
 	}
+}
+
+// lookup resolves DNS record targets and caches them, so each lookup is
+// performed at most once per run.
+type lookup struct {
+	ipv4     string
+	ipv6     string
+	hostname string
+}
+
+// target returns the value to be set on a DNS record of the given type.
+func (l *lookup) target(recordType string) (string, error) {
+	switch recordType {
+	case "A":
+		if l.ipv4 == "" {
+			log.Info("Reading public IPv4 address")
+			ipv4, err := ip.GetPublicIPv4()
+			if err != nil {
+				return "", fmt.Errorf("reading public IPv4 address: %w", err)
+			}
+			log.WithFields(log.Fields{"ip": ipv4}).Info("Found public IPv4 address")
+			l.ipv4 = ipv4
+		}
+
+		return l.ipv4, nil
+	case "AAAA":
+		if l.ipv6 == "" {
+			log.Info("Reading public IPv6 address")
+			ipv6, err := ip.GetPublicIPv6()
+			if err != nil {
+				return "", fmt.Errorf("reading public IPv6 address: %w", err)
+			}
+			log.WithFields(log.Fields{"ip": ipv6}).Info("Found public IPv6 address")
+			l.ipv6 = ipv6
+		}
+
+		return l.ipv6, nil
+	case "CNAME":
+		if l.hostname == "" {
+			// Hostname is the reverse lookup of the public IPv4 address.
+			ipv4, err := l.target("A")
+			if err != nil {
+				return "", err
+			}
+
+			log.Info("Reading public hostname")
+			hostnames, err := hostname.Get(ipv4)
+			if err != nil {
+				return "", fmt.Errorf("reading public hostname: %w", err)
+			}
+			log.WithFields(log.Fields{"hostname": hostnames[0]}).Info("Found public hostname")
+			l.hostname = hostnames[0]
+		}
+
+		return l.hostname, nil
+	default:
+		return "", fmt.Errorf("unsupported record type %q", recordType)
+	}
+}
+
+// updateRecord creates or updates a single DNS record so it points to target,
+// then refreshes the DNS zone.
+func updateRecord(c client.Client, zone, recordType, subDomain, target string) error {
+	fields := log.Fields{
+		"zone":        zone,
+		"record-type": recordType,
+		"subdomain":   subDomain,
+		"target":      target,
+	}
+
+	// Find the dns record.
+	log.WithFields(fields).Info("Searching DNS record")
+	id, err := c.FindRecord(zone, recordType, subDomain)
+	if err != nil {
+		if !errors.Is(err, ovherrors.RecordNotFound) {
+			return fmt.Errorf("searching DNS record: %w", err)
+		}
+		log.WithFields(fields).Info("DNS record not found")
+	}
+
+	if id == 0 {
+		// Create the dns record.
+		record := client.DNSRecord{
+			FieldType: recordType,
+			SubDomain: subDomain,
+			Target:    target,
+		}
+
+		fields["record"] = record
+		log.WithFields(fields).Info("Creating DNS record")
+		newRecord, err := c.CreateRecord(zone, record)
+		if err != nil {
+			return fmt.Errorf("creating DNS record: %w", err)
+		}
+		fields["record"] = newRecord
+		log.WithFields(fields).Info("Successfully created DNS record")
+	} else {
+		// Read the dns record.
+		record, err := c.GetRecord(zone, id)
+		if err != nil {
+			return fmt.Errorf("reading DNS record: %w", err)
+		}
+		fields["ID"] = id
+		fields["record"] = record
+		log.WithFields(fields).Info("Found DNS record")
+
+		// Skip update when target is the same.
+		if record.Target == target {
+			log.WithFields(fields).Info("Skipping DNS record, already up to date")
+			return nil
+		}
+
+		record.Target = target
+
+		log.WithFields(fields).Info("Updating DNS record")
+		err = c.UpdateRecord(zone, id, *record)
+		if err != nil {
+			return fmt.Errorf("updating DNS record: %w", err)
+		}
+		log.WithFields(fields).Info("Successfully updated DNS record")
+	}
+
+	err = c.RefreshZone(zone)
+	if err != nil {
+		return fmt.Errorf("refreshing DNS zone: %w", err)
+	}
+
+	return nil
 }
