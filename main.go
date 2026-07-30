@@ -23,7 +23,6 @@ const (
 	name = "ovh-dyndns"
 
 	configFileName = "ovh-dyndns"
-	statusDone     = "done"
 )
 
 func main() {
@@ -43,6 +42,7 @@ func main() {
 		flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
 		flag.Bool("version", false, "print version and exit")
 
+		// Parse flags and bind them to viper
 		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 		pflag.Parse()
 		err = viper.BindPFlags(pflag.CommandLine)
@@ -51,11 +51,11 @@ func main() {
 			return
 		}
 
+		// Print version and exit if the version flag is set.
 		if viper.GetBool("version") {
 			if version.Version == "" {
 				version.Version = "dev" // Set a default version if not provided
 			}
-			// If the version flag is set, print the version and exit.
 			fmt.Println(version.Print(name))
 			return
 		}
