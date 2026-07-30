@@ -37,7 +37,7 @@ func main() {
 		// Define and process arguments.
 		flag.Bool("consumer-key", false, "generate a consumer key")
 		flag.String("zone", "", "DNS zone name (e.g. example.com)")
-		flag.String("record-type", "", "DNS record typ (e.g. CNAME)")
+		flag.String("record-type", "", "DNS record type (e.g. CNAME)")
 		flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
 		flag.Bool("version", false, "print version and exit")
 
@@ -96,18 +96,18 @@ func main() {
 	}
 
 	if generateConsumerKey {
-		// Generate customer key.
+		// Generate consumer key.
 		fields := log.Fields{
 			"status": "generating",
 		}
-		log.WithFields(fields).Info("customer key")
+		log.WithFields(fields).Info("consumer key")
 		res, err := ovhClient.GenerateConsumerKey()
 		if err != nil {
 			log.Fatalf("ovhClient.GenerateConsumerKey %v", err)
 			return
 		}
 		fields["status"] = statusDone
-		log.WithFields(fields).Info("customer key")
+		log.WithFields(fields).Info("consumer key")
 
 		log.Printf("response\n%v", res)
 		return
@@ -186,7 +186,7 @@ func main() {
 		case "A":
 			target = ipAddress
 		default:
-			log.Fatalf("unsuported record type: %q", record.FieldType)
+			log.Fatalf("unsupported record type: %q", record.FieldType)
 			return
 		}
 		// Skip update when target is the same.

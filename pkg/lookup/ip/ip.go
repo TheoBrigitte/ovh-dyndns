@@ -6,7 +6,7 @@ import (
 
 const errInvalidIP = "invalid IP address format"
 
-// Get retrieve public facing ip adresse.
+// GetPublic retrieves the public facing IP address
 func GetPublic() (string, error) {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	err := consensus.UseIPProtocol(4)
