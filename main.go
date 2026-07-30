@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/TheoBrigitte/ovh-dyndns/pkg/lookup/hostname"
 	"github.com/TheoBrigitte/ovh-dyndns/pkg/lookup/ip"
 	"github.com/TheoBrigitte/ovh-dyndns/pkg/ovh/client"
+	ovherrors "github.com/TheoBrigitte/ovh-dyndns/pkg/ovh/errors"
 )
 
 const (
@@ -161,49 +163,77 @@ func main() {
 		log.WithFields(fields).Info("dns record")
 		id, err := ovhClient.FindRecord(zone, recordType, domain)
 		if err != nil {
-			log.Fatalf("ovhClient.FindRecord %v", err)
-			return
+			if !errors.Is(err, ovherrors.RecordNotFound) {
+				log.Fatalf("ovhClient.FindRecord %v", err)
+				return
+			}
 		}
-		fields["ID"] = id
-		fields["status"] = "reading"
-		log.WithFields(fields).Info("dns record")
-
-		// Read the dns record
-		record, err := ovhClient.GetRecord(zone, id)
-		if err != nil {
-			log.Fatalf("ovhClient.GetRecord %v", err)
-			return
-		}
-		fields["record"] = record
-		fields["status"] = "updating"
-		log.WithFields(fields).Info("dns record")
-
-		// Update the dns record
-		var target string
-		switch record.FieldType {
-		case "CNAME":
-			// TODO: fix potential nil pointer dereference if hostnames is empty
-			target = hostnames[0]
-		case "A":
-			target = ipAddress
-		default:
-			log.Fatalf("unsupported record type: %q", record.FieldType)
-			return
-		}
-		// Skip update when target is the same.
-		if record.Target == target {
-			fields["status"] = "ok"
+		if id != 0 {
+			fields["ID"] = id
+			fields["status"] = "reading"
 			log.WithFields(fields).Info("dns record")
-			continue
+
+			// Read the dns record
+			record, err := ovhClient.GetRecord(zone, id)
+			if err != nil {
+				log.Fatalf("ovhClient.GetRecord %v", err)
+				return
+			}
+
+			fields["record"] = record
+			fields["status"] = "updating"
+			log.WithFields(fields).Info("dns record")
+
+			// Update the dns record
+			var target string
+			switch record.FieldType {
+			case "CNAME":
+				// TODO: fix potential nil pointer dereference if hostnames is empty
+				target = hostnames[0]
+			case "A":
+				target = ipAddress
+			default:
+				log.Fatalf("unsupported record type: %q", record.FieldType)
+				return
+			}
+			// Skip update when target is the same.
+			if record.Target == target {
+				fields["status"] = "ok"
+				log.WithFields(fields).Info("dns record")
+				continue
+			}
+
+			record.Target = target
+			err = ovhClient.UpdateRecord(zone, id, *record)
+			if err != nil {
+				log.Fatalf("ovhClient.UpdateRecord %v", err)
+				return
+			}
+			fields["status"] = "updated"
+		} else {
+			// Create the dns record
+			record := client.DNSRecord{
+				FieldType: recordType,
+				SubDomain: domain,
+			}
+			if recordType == "CNAME" {
+				record.Target = hostnames[0]
+			} else {
+				record.Target = ipAddress
+			}
+
+			fields["record"] = record
+			fields["status"] = "creating"
+			log.WithFields(fields).Info("dns record")
+			newRecord, err := ovhClient.CreateRecord(zone, record)
+			if err != nil {
+				log.Fatalf("ovhClient.CreateRecord %v", err)
+				return
+			}
+			fields["record"] = newRecord
+			fields["status"] = "created"
 		}
 
-		record.Target = target
-		err = ovhClient.UpdateRecord(zone, id, *record)
-		if err != nil {
-			log.Fatalf("ovhClient.UpdateRecord %v", err)
-			return
-		}
-		fields["status"] = "updated"
 		log.WithFields(fields).Info("dns record")
 	}
 

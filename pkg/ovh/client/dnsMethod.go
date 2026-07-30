@@ -83,3 +83,15 @@ func (c Client) RefreshZone(zone string) error {
 
 	return nil
 }
+
+// CreateRecord create a new DNS record in zone.
+func (c Client) CreateRecord(zone string, record DNSRecord) (*DNSRecord, error) {
+	var createdRecord DNSRecord
+
+	err := c.client.Post(fmt.Sprintf("/domain/zone/%s/record", zone), record, &createdRecord)
+	if err != nil {
+		return nil, err
+	}
+
+	return &createdRecord, nil
+}
