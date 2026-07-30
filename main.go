@@ -182,6 +182,7 @@ func main() {
 		var target string
 		switch record.FieldType {
 		case "CNAME":
+			// TODO: fix potential nil pointer dereference if hostnames is empty
 			target = hostnames[0]
 		case "A":
 			target = ipAddress

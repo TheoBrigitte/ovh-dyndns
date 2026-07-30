@@ -12,8 +12,7 @@ This service retrieves the public IP address or hostname and updates DNS record 
 #### Binary
 
 ```
-go get -d github.com/TheoBrigitte/ovh-dyndns
-go build github.com/TheoBrigitte/ovh-dyndns
+go install github.com/TheoBrigitte/ovh-dyndns
 sudo mv ovh-dyndns /usr/local/bin
 ```
 
@@ -24,7 +23,8 @@ Replace values in configuration files:
 * ovh-dyndns.toml hold the DNS record(s) to be updated.
 
 ```
-cp $GOPATH/github.com/TheoBrigitte/ovh-dyndns/config/ovh-dyndns.toml.sample /etc/ovh-dyndns.toml
+mkdir -p /etc/ovh-dyndns
+cp $GOPATH/github.com/TheoBrigitte/ovh-dyndns/config/ovh-dyndns.toml.sample /etc/ovh-dyndns/ovh-dyndns.toml
 cp $GOPATH/github.com/TheoBrigitte/ovh-dyndns/config/ovh.conf.sample /etc/ovh.conf
 ```
 
