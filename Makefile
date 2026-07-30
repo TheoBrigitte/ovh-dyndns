@@ -41,6 +41,12 @@ build: ## Build the Go binary
 	.
 	@printf "$(GREEN)Build completed. Output is in $(GO_BIN)\n"
 
+.PHONY: build-%
+build-%: ## Build the Go binary for a specific OS and architecture, e.g. build-linux-amd64
+	$(eval GOOS   := $(word 1,$(subst -, ,$*)))
+	$(eval GOARCH := $(word 2,$(subst -, ,$*)))
+	@$(MAKE) build GOOS=$(GOOS) GOARCH=$(GOARCH)
+
 .PHONY: build-all
 build-all: ## Build the Go binary for all supported OSes and architectures
 	$(foreach GOOS,$(OSES),$(foreach GOARCH,$(ARCHS), \
