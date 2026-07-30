@@ -30,10 +30,13 @@ func main() {
 
 	// Define and process arguments.
 	flag.Bool("consumer-key", false, "generate a consumer key")
-	flag.String("zone", "", "DNS zone name (e.g. example.com)")
+	flag.Bool("version", false, "print version and exit")
+
+	flag.Bool("4", false, "force IPv4 address lookup")
+	flag.Bool("6", false, "force IPv6 address lookup")
 	flag.String("record-type", "", "DNS record type (e.g. CNAME)")
 	flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
-	flag.Bool("version", false, "print version and exit")
+	flag.String("zone", "", "DNS zone name (e.g. example.com)")
 
 	// Parse flags and bind them to viper
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -82,6 +85,8 @@ func run() {
 	recordType = strings.ToUpper(viper.GetString("record-type"))
 	generateConsumerKey = viper.GetBool("consumer-key")
 	subDomains = strings.Split(viper.GetString("subdomains"), ",")
+	ipv4 := viper.GetBool("4")
+	ipv6 := viper.GetBool("6")
 
 	log.WithFields(log.Fields{
 		"zone":        zone,
@@ -118,8 +123,18 @@ func run() {
 	// Read public IP address.
 	var ipAddress string
 	{
+		if ipv4 && ipv6 {
+			log.Fatal("Cannot specify both IPv4 and IPv6 flags")
+			return
+		}
+
 		log.Info("Reading public IP address")
-		ipAddress, err = ip.GetPublic()
+		if ipv6 || recordType == "AAAA" {
+			ipAddress, err = ip.GetPublicIPv6()
+		} else {
+			ipAddress, err = ip.GetPublicIPv4()
+			ipv4 = true
+		}
 		if err != nil {
 			log.Fatalf("Reading public IP address %v", err)
 			return
@@ -178,6 +193,16 @@ func run() {
 				// TODO: fix potential nil pointer dereference if hostnames is empty
 				target = hostnames[0]
 			case "A":
+				if ipv6 {
+					log.Errorf("Cannot update A record with IPv6 address")
+					continue
+				}
+				target = ipAddress
+			case "AAAA":
+				if ipv4 {
+					log.Errorf("Cannot update AAAA record with IPv4 address")
+					continue
+				}
 				target = ipAddress
 			default:
 				log.Errorf("Unsupported record type: %q", record.FieldType)
