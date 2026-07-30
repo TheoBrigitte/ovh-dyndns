@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ovh/go-ovh/ovh"
+	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -16,12 +17,11 @@ import (
 )
 
 const (
+	// name is the name of the application.
+	name = "ovh-dyndns"
+
 	configFileName = "ovh-dyndns"
 	statusDone     = "done"
-)
-
-var (
-	Version = "n/a"
 )
 
 func main() {
@@ -50,7 +50,11 @@ func main() {
 		}
 
 		if viper.GetBool("version") {
-			fmt.Printf("version: %s\n", Version)
+			if version.Version == "" {
+				version.Version = "dev" // Set a default version if not provided
+			}
+			// If the version flag is set, print the version and exit.
+			fmt.Println(version.Print(name))
 			return
 		}
 
