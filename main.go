@@ -26,14 +26,8 @@ const (
 )
 
 func main() {
-	var (
-		zone                string
-		recordType          string
-		generateConsumerKey bool
-		subDomains          []string
+	var err error
 
-		err error
-	)
 	{
 		// Define and process arguments.
 		flag.Bool("consumer-key", false, "generate a consumer key")
@@ -70,18 +64,32 @@ func main() {
 			log.Fatalf("Reading configuration file %v", err)
 			return
 		}
-
-		zone = viper.GetString("zone")
-		recordType = strings.ToUpper(viper.GetString("record-type"))
-		generateConsumerKey = viper.GetBool("consumer-key")
-		subDomains = strings.Split(viper.GetString("subdomains"), ",")
-
-		log.WithFields(log.Fields{
-			"zone":        zone,
-			"record-type": recordType,
-			"subdomains":  subDomains,
-		}).Info("Starting ovh-dyndns")
 	}
+
+	run()
+}
+
+func run() error {
+	var (
+		zone                string
+		recordType          string
+		generateConsumerKey bool
+		subDomains          []string
+
+		err error
+	)
+
+	// Log configuration values.
+	zone = viper.GetString("zone")
+	recordType = strings.ToUpper(viper.GetString("record-type"))
+	generateConsumerKey = viper.GetBool("consumer-key")
+	subDomains = strings.Split(viper.GetString("subdomains"), ",")
+
+	log.WithFields(log.Fields{
+		"zone":        zone,
+		"record-type": recordType,
+		"subdomains":  subDomains,
+	}).Info("Starting ovh-dyndns")
 
 	// Create client for OVH API.
 	var ovhClient client.Client
@@ -90,7 +98,7 @@ func main() {
 		c, err := ovh.NewDefaultClient()
 		if err != nil {
 			log.Fatalf("Initializing OVH client %v", err)
-			return
+			return nil
 		}
 
 		ovhClient = client.New(*c)
@@ -102,11 +110,11 @@ func main() {
 		res, err := ovhClient.GenerateConsumerKey()
 		if err != nil {
 			log.Fatalf("Generating consumer key %v", err)
-			return
+			return nil
 		}
 		log.Info("Successfully generated consumer key")
 		log.Printf("response\n%v", res)
-		return
+		return nil
 	}
 
 	// Read public IP address.
@@ -116,7 +124,7 @@ func main() {
 		ipAddress, err = ip.GetPublic()
 		if err != nil {
 			log.Fatalf("Reading public IP address %v", err)
-			return
+			return nil
 		}
 		fields := log.Fields{"ip": ipAddress}
 		log.WithFields(fields).Info("Found public IP address")
@@ -130,7 +138,7 @@ func main() {
 			hostnames, err = hostname.Get(ipAddress)
 			if err != nil {
 				log.Fatalf("Reading public Hostname %v", err)
-				return
+				return nil
 			}
 			fields := log.Fields{"hostnames": hostnames[0]}
 			log.WithFields(fields).Info("Found public Hostname")
@@ -216,4 +224,6 @@ func main() {
 			log.WithFields(fields).Info("Successfully created DNS record")
 		}
 	}
+
+	return nil
 }
