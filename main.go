@@ -28,42 +28,40 @@ const (
 func main() {
 	var err error
 
-	{
-		// Define and process arguments.
-		flag.Bool("consumer-key", false, "generate a consumer key")
-		flag.String("zone", "", "DNS zone name (e.g. example.com)")
-		flag.String("record-type", "", "DNS record type (e.g. CNAME)")
-		flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
-		flag.Bool("version", false, "print version and exit")
+	// Define and process arguments.
+	flag.Bool("consumer-key", false, "generate a consumer key")
+	flag.String("zone", "", "DNS zone name (e.g. example.com)")
+	flag.String("record-type", "", "DNS record type (e.g. CNAME)")
+	flag.String("subdomains", "", "DNS sub domain filter. Multiple entries separated by comma (e.g. www,ftp)")
+	flag.Bool("version", false, "print version and exit")
 
-		// Parse flags and bind them to viper
-		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-		pflag.Parse()
-		err = viper.BindPFlags(pflag.CommandLine)
-		if err != nil {
-			log.Fatalf("Initializing flags %v", err)
-			return
-		}
+	// Parse flags and bind them to viper
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	err = viper.BindPFlags(pflag.CommandLine)
+	if err != nil {
+		log.Fatalf("Initializing flags %v", err)
+		return
+	}
 
-		// Print version and exit if the version flag is set.
-		if viper.GetBool("version") {
-			if version.Version == "" {
-				version.Version = "dev" // Set a default version if not provided
-			}
-			fmt.Println(version.Print(name))
-			return
+	// Print version and exit if the version flag is set.
+	if viper.GetBool("version") {
+		if version.Version == "" {
+			version.Version = "dev" // Set a default version if not provided
 		}
+		fmt.Println(version.Print(name))
+		return
+	}
 
-		// Load config file
-		viper.SetConfigName(configFileName)
-		viper.AddConfigPath("/etc/ovh-dyndns")
-		viper.AddConfigPath("$HOME/")
-		viper.AddConfigPath(".")
-		err = viper.ReadInConfig()
-		if err != nil {
-			log.Fatalf("Reading configuration file %v", err)
-			return
-		}
+	// Load config file
+	viper.SetConfigName(configFileName)
+	viper.AddConfigPath("/etc/ovh-dyndns")
+	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath(".")
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Reading configuration file %v", err)
+		return
 	}
 
 	run()
