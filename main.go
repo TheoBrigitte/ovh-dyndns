@@ -47,7 +47,7 @@ func main() {
 		pflag.Parse()
 		err = viper.BindPFlags(pflag.CommandLine)
 		if err != nil {
-			log.Fatalf("viper.BindPFlags %v", err)
+			log.Fatalf("Initializing flags %v", err)
 			return
 		}
 
@@ -67,7 +67,7 @@ func main() {
 		viper.AddConfigPath(".")
 		err = viper.ReadInConfig()
 		if err != nil {
-			log.Fatalf("viper.ReadInConfig %v", err)
+			log.Fatalf("Reading configuration file %v", err)
 			return
 		}
 
@@ -77,11 +77,10 @@ func main() {
 		subDomains = strings.Split(viper.GetString("subdomains"), ",")
 
 		log.WithFields(log.Fields{
-			"zone":                zone,
-			"record-type":         recordType,
-			"subdomains":          subDomains,
-			"generateConsumerKey": generateConsumerKey,
-		}).Info("arguments")
+			"zone":        zone,
+			"record-type": recordType,
+			"subdomains":  subDomains,
+		}).Info("Starting ovh-dyndns")
 	}
 
 	// Create client for OVH API.
@@ -90,7 +89,7 @@ func main() {
 		// Create a client using credentials from config files or environment variables
 		c, err := ovh.NewDefaultClient()
 		if err != nil {
-			log.Fatalf("ovh.NewDefaultClient %v", err)
+			log.Fatalf("Initializing OVH client %v", err)
 			return
 		}
 
@@ -99,18 +98,13 @@ func main() {
 
 	if generateConsumerKey {
 		// Generate consumer key.
-		fields := log.Fields{
-			"status": "generating",
-		}
-		log.WithFields(fields).Info("consumer key")
+		log.Info("Generating consumer key")
 		res, err := ovhClient.GenerateConsumerKey()
 		if err != nil {
-			log.Fatalf("ovhClient.GenerateConsumerKey %v", err)
+			log.Fatalf("Generating consumer key %v", err)
 			return
 		}
-		fields["status"] = statusDone
-		log.WithFields(fields).Info("consumer key")
-
+		log.Info("Successfully generated consumer key")
 		log.Printf("response\n%v", res)
 		return
 	}
@@ -118,36 +112,28 @@ func main() {
 	// Read public IP address.
 	var ipAddress string
 	{
-		fields := log.Fields{
-			"status": "reading",
-		}
-		log.WithFields(fields).Info("ip address")
+		log.Info("Reading public IP address")
 		ipAddress, err = ip.GetPublic()
 		if err != nil {
-			log.Fatalf("ip.GetPublic %v", err)
+			log.Fatalf("Reading public IP address %v", err)
 			return
 		}
-		fields["status"] = statusDone
-		fields["ip"] = ipAddress
-		log.WithFields(fields).Info("ip address")
+		fields := log.Fields{"ip": ipAddress}
+		log.WithFields(fields).Info("Found public IP address")
 	}
 
 	// Lookup hostname.
 	var hostnames []string
 	{
 		if recordType == "CNAME" {
-			fields := log.Fields{
-				"status": "reading",
-			}
-			log.WithFields(fields).Info("hostname")
+			log.Info("Reading public Hostname")
 			hostnames, err = hostname.Get(ipAddress)
 			if err != nil {
-				log.Fatalf("hostname.Get %v", err)
+				log.Fatalf("Reading public Hostname %v", err)
 				return
 			}
-			fields["status"] = statusDone
-			fields["hostname"] = hostnames[0]
-			log.WithFields(fields).Info("hostname")
+			fields := log.Fields{"hostnames": hostnames[0]}
+			log.WithFields(fields).Info("Found public Hostname")
 		}
 	}
 
@@ -155,34 +141,29 @@ func main() {
 	for _, domain := range subDomains {
 		// Find the dns record.
 		fields := log.Fields{
-			"status":     "finding",
 			"domain":     domain,
 			"zone":       zone,
 			"recordType": recordType,
 		}
-		log.WithFields(fields).Info("dns record")
+		log.WithFields(fields).Info("Searching DNS record")
 		id, err := ovhClient.FindRecord(zone, recordType, domain)
 		if err != nil {
 			if !errors.Is(err, ovherrors.RecordNotFound) {
-				log.Fatalf("ovhClient.FindRecord %v", err)
+				log.Fatalf("Searching DNS record %v", err)
 				return
 			}
+			log.WithFields(fields).Info("DNS record not found")
 		}
 		if id != 0 {
-			fields["ID"] = id
-			fields["status"] = "reading"
-			log.WithFields(fields).Info("dns record")
-
 			// Read the dns record
 			record, err := ovhClient.GetRecord(zone, id)
 			if err != nil {
 				log.Fatalf("ovhClient.GetRecord %v", err)
 				return
 			}
-
+			fields["ID"] = id
 			fields["record"] = record
-			fields["status"] = "updating"
-			log.WithFields(fields).Info("dns record")
+			log.WithFields(fields).Info("Found DNS record")
 
 			// Update the dns record
 			var target string
@@ -193,23 +174,25 @@ func main() {
 			case "A":
 				target = ipAddress
 			default:
-				log.Fatalf("unsupported record type: %q", record.FieldType)
+				log.Fatalf("Unsupported record type: %q", record.FieldType)
 				return
 			}
 			// Skip update when target is the same.
 			if record.Target == target {
-				fields["status"] = "ok"
-				log.WithFields(fields).Info("dns record")
+				log.WithFields(fields).Info("Skipping DNS record, already up to date")
 				continue
 			}
 
 			record.Target = target
+
+			log.WithFields(fields).Info("Updating DNS record")
+
 			err = ovhClient.UpdateRecord(zone, id, *record)
 			if err != nil {
-				log.Fatalf("ovhClient.UpdateRecord %v", err)
+				log.Fatalf("Updating DNS record %v", err)
 				return
 			}
-			fields["status"] = "updated"
+			log.WithFields(fields).Info("Successfully updated DNS record")
 		} else {
 			// Create the dns record
 			record := client.DNSRecord{
@@ -223,19 +206,14 @@ func main() {
 			}
 
 			fields["record"] = record
-			fields["status"] = "creating"
-			log.WithFields(fields).Info("dns record")
+			log.WithFields(fields).Info("Creating DNS record")
 			newRecord, err := ovhClient.CreateRecord(zone, record)
 			if err != nil {
-				log.Fatalf("ovhClient.CreateRecord %v", err)
+				log.Fatalf("Creating DNS record %v", err)
 				return
 			}
 			fields["record"] = newRecord
-			fields["status"] = "created"
+			log.WithFields(fields).Info("Successfully created DNS record")
 		}
-
-		log.WithFields(fields).Info("dns record")
 	}
-
-	log.Info("success")
 }
