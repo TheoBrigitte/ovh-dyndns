@@ -246,5 +246,11 @@ func run() {
 			fields["record"] = newRecord
 			log.WithFields(fields).Info("Successfully created DNS record")
 		}
+
+		err = ovhClient.RefreshZone(zone)
+		if err != nil {
+			log.Errorf("Refreshing DNS zone %v", err)
+			continue
+		}
 	}
 }

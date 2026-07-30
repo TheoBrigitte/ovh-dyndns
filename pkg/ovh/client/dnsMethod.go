@@ -71,7 +71,7 @@ func (c Client) UpdateRecord(zone string, id int64, record DNSRecord) error {
 		return err
 	}
 
-	return c.RefreshZone(zone)
+	return nil
 }
 
 // RefreshZone apply changes to DNS zone.
