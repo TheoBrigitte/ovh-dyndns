@@ -1,6 +1,6 @@
 module github.com/TheoBrigitte/ovh-dyndns
 
-go 1.23
+go 1.26
 
 require (
 	github.com/glendc/go-external-ip v0.1.0
