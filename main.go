@@ -149,8 +149,8 @@ func main() {
 		id, err := ovhClient.FindRecord(zone, recordType, domain)
 		if err != nil {
 			if !errors.Is(err, ovherrors.RecordNotFound) {
-				log.Fatalf("Searching DNS record %v", err)
-				return
+				log.WithFields(fields).Errorf("Searching DNS record %v", err)
+				continue
 			}
 			log.WithFields(fields).Info("DNS record not found")
 		}
@@ -158,8 +158,8 @@ func main() {
 			// Read the dns record
 			record, err := ovhClient.GetRecord(zone, id)
 			if err != nil {
-				log.Fatalf("ovhClient.GetRecord %v", err)
-				return
+				log.Errorf("Reading DNS record %v", err)
+				continue
 			}
 			fields["ID"] = id
 			fields["record"] = record
@@ -174,8 +174,8 @@ func main() {
 			case "A":
 				target = ipAddress
 			default:
-				log.Fatalf("Unsupported record type: %q", record.FieldType)
-				return
+				log.Errorf("Unsupported record type: %q", record.FieldType)
+				continue
 			}
 			// Skip update when target is the same.
 			if record.Target == target {
@@ -189,8 +189,8 @@ func main() {
 
 			err = ovhClient.UpdateRecord(zone, id, *record)
 			if err != nil {
-				log.Fatalf("Updating DNS record %v", err)
-				return
+				log.Errorf("Updating DNS record %v", err)
+				continue
 			}
 			log.WithFields(fields).Info("Successfully updated DNS record")
 		} else {
@@ -209,8 +209,8 @@ func main() {
 			log.WithFields(fields).Info("Creating DNS record")
 			newRecord, err := ovhClient.CreateRecord(zone, record)
 			if err != nil {
-				log.Fatalf("Creating DNS record %v", err)
-				return
+				log.Errorf("Creating DNS record %v", err)
+				continue
 			}
 			fields["record"] = newRecord
 			log.WithFields(fields).Info("Successfully created DNS record")
