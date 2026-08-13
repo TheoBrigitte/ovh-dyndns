@@ -2,6 +2,8 @@ PROJECT_NAME := ovh-dyndns
 
 # Directories
 BUILD_DIR := build
+PREFIX ?= /usr/local
+INSTALL_DIR := $(PREFIX)/bin
 
 # Build informations
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -64,12 +66,11 @@ build-all: ## Build the Go binary for all supported OSes and architectures
 	))
 
 .PHONY: install
-install: build ## Install the binary to ~/.local/bin
-	@printf "$(CYAN)Installing binary to ~/.local/bin...$(RESET)\n"
-	@mkdir -p ~/.local/bin
-	cp $(GO_BIN) ~/.local/bin/$(PROJECT_NAME)
-	chmod +x ~/.local/bin/$(PROJECT_NAME)
-	@printf "$(GREEN)Binary installed to ~/.local/bin/$(PROJECT_NAME)$(RESET)\n"
+install: build ## Install the binary to $(PREFIX)/bin, override with PREFIX=
+	@printf "$(CYAN)Installing binary to $(INSTALL_DIR)...$(RESET)\n"
+	@mkdir -p $(INSTALL_DIR)
+	install -m 0755 $(GO_BIN) $(INSTALL_DIR)/$(PROJECT_NAME)
+	@printf "$(GREEN)Binary installed to $(INSTALL_DIR)/$(PROJECT_NAME)$(RESET)\n"
 
 .PHONY: clean
 clean: ## Clean build artifacts

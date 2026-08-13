@@ -91,7 +91,10 @@ Each credential can also be set through the `OVH_ENDPOINT`,
 `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET` and `OVH_CONSUMER_KEY`
 environment variables, which take precedence over all files.
 
+Create the user the service runs as, and install both files:
+
 ```
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin ovh-dyndns
 sudo mkdir -p /etc/ovh-dyndns
 sudo cp config/ovh-dyndns.toml.sample /etc/ovh-dyndns/ovh-dyndns.toml
 sudo cp config/ovh.conf.sample /etc/ovh.conf
@@ -108,16 +111,31 @@ Visit the validation URL printed in the output to activate the key, then store i
 as `consumer_key` in `/etc/ovh.conf`. The key is requested with read access on
 `/me` and read-write access on `/domain`.
 
-#### Systemd
-
-The service runs as the `ovh-dyndns` user and the timer triggers it every 6 hours.
+`/etc/ovh.conf` holds credentials allowing to modify your DNS records, restrict
+it to the user running the service:
 
 ```
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin ovh-dyndns
+sudo chown root:ovh-dyndns /etc/ovh.conf
+sudo chmod 640 /etc/ovh.conf
+```
+
+#### Systemd
+
+The service runs as the `ovh-dyndns` user and the timer triggers it every 10
+minutes. Runs missed while the machine was off are caught up on the next boot.
+
+```
 sudo cp systemd/ovh-dyndns.service systemd/ovh-dyndns.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl start ovh-dyndns.service
 sudo systemctl enable --now ovh-dyndns.timer
+```
+
+Only the timer is enabled, the service is triggered by it. Run it once to check
+the configuration:
+
+```
+sudo systemctl start ovh-dyndns.service
+journalctl -u ovh-dyndns.service
 ```
 
 ## Usage
@@ -135,7 +153,7 @@ ovh-dyndns --version       print version and exit
 ```
 make setup     install the pre-commit hooks
 make build     build the binary into build/
-make install   build and install the binary into ~/.local/bin
+make install   build and install the binary into /usr/local/bin
 make test      run the test suite
 make lint      run all linters
 ```
