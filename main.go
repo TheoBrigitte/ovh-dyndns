@@ -205,7 +205,6 @@ func updateRecord(c client.Client, zone, recordType, subDomain, target string) e
 		"zone":        zone,
 		"record-type": recordType,
 		"subdomain":   subDomain,
-		"target":      target,
 	}
 
 	// Find the dns record.
