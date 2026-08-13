@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-13
+
 ### Added
 
 - Add support for IPv6 lookup
@@ -34,4 +36,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Fix ipAddress variable name typo
 - Fix linter errors
 
-[Unreleased]: https://github.com/TheoBrigitte/ovh-dyndns/tree/main
+[Unreleased]: https://github.com/TheoBrigitte/ovh-dyndns/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/TheoBrigitte/ovh-dyndns/releases/tag/v0.1.0
