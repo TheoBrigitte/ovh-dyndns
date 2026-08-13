@@ -4,6 +4,5 @@ import (
 	"errors"
 )
 
-var (
-	NoHostnameFound = errors.New("no hostname found")
-)
+// ErrHostnameNotFound is returned when no hostname is found for the given IP address.
+var ErrHostnameNotFound = errors.New("no hostname found")

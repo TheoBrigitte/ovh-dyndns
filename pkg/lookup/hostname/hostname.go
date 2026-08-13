@@ -12,7 +12,7 @@ func Get(addr string) ([]string, error) {
 	}
 
 	if len(names) < 1 {
-		return nil, NoHostnameFound
+		return nil, ErrHostnameNotFound
 	}
 
 	return names, nil

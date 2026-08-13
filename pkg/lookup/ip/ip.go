@@ -18,6 +18,7 @@ func GetPublic() (string, error) {
 	return ip.String(), nil
 }
 
+// GetPublicIPv4 retrieves the public facing IPv4 address
 func GetPublicIPv4() (string, error) {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	err := consensus.UseIPProtocol(4)
@@ -33,6 +34,7 @@ func GetPublicIPv4() (string, error) {
 	return ip.String(), nil
 }
 
+// GetPublicIPv6 retrieves the public facing IPv6 address
 func GetPublicIPv6() (string, error) {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	err := consensus.UseIPProtocol(6)

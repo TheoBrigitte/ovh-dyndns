@@ -211,7 +211,7 @@ func updateRecord(c client.Client, zone, recordType, subDomain, target string) e
 	log.WithFields(fields).Info("Searching DNS record")
 	id, err := c.FindRecord(zone, recordType, subDomain)
 	if err != nil {
-		if !errors.Is(err, ovherrors.RecordNotFound) {
+		if !errors.Is(err, ovherrors.ErrRecordNotFound) {
 			return fmt.Errorf("searching DNS record: %w", err)
 		}
 		log.WithFields(fields).Info("DNS record not found")

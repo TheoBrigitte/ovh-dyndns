@@ -5,7 +5,10 @@ import (
 )
 
 var (
-	NoZoneError    = errors.New("missing zone name argument")
-	TooManyRecords = errors.New("too many dns records found")
-	RecordNotFound = errors.New("dns record not found")
+	// ErrNoZone is returned when the zone name argument is missing.
+	ErrNoZone = errors.New("missing zone name argument")
+	// ErrTooManyRecords is returned when more than one DNS record is found.
+	ErrTooManyRecords = errors.New("too many dns records found")
+	// ErrRecordNotFound is returned when no DNS record is found.
+	ErrRecordNotFound = errors.New("dns record not found")
 )

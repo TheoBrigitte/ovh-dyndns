@@ -16,11 +16,11 @@ func (c Client) FindRecord(zone, recordType, subDomain string) (int64, error) {
 	}
 
 	if len(IDs) < 1 {
-		return 0, errors.RecordNotFound
+		return 0, errors.ErrRecordNotFound
 	}
 
 	if len(IDs) > 1 {
-		return 0, errors.TooManyRecords
+		return 0, errors.ErrTooManyRecords
 	}
 
 	return IDs[0], nil
@@ -32,7 +32,7 @@ func (c Client) ListRecords(zone, recordType, subDomain string) ([]int64, error)
 	var records []int64
 
 	if zone == "" {
-		return nil, errors.NoZoneError
+		return nil, errors.ErrNoZone
 	}
 
 	q := url.Values{}
