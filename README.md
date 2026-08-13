@@ -1,12 +1,12 @@
 <p align="center">
-    <img src="assets/ovh-dyndns-logo.png" alt="OVH DynDns logo" height="100px">
+    <img src="assets/ovh-dyndns-logo.png" alt="OVH DynDns logo" height="250px">
 </p>
 
 <div align="center">
 
-  [![GitHub Release](https://img.shields.io/github/v/release/TheoBrigitte/ovh-dyndns)](https://github.com/TheoBrigitte/ovh-dyndns/releases/latest)
   [![Go Reference](https://pkg.go.dev/badge/github.com/TheoBrigitte/ovh-dyndns.svg)](https://pkg.go.dev/github.com/TheoBrigitte/ovh-dyndns)
   [![ci](https://github.com/TheoBrigitte/ovh-dyndns/actions/workflows/ci.yaml/badge.svg)](https://github.com/TheoBrigitte/ovh-dyndns/actions/workflows/ci.yaml)
+  [![GitHub Release](https://img.shields.io/github/v/release/TheoBrigitte/ovh-dyndns)](https://github.com/TheoBrigitte/ovh-dyndns/releases/latest)
   ![GitHub Downloads](https://img.shields.io/github/downloads/TheoBrigitte/ovh-dyndns/total)
   [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TheoBrigitte/ovh-dyndns/badge)](https://scorecard.dev/viewer/?uri=github.com/TheoBrigitte/ovh-dyndns)
 
