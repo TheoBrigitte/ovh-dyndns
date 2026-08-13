@@ -1,10 +1,25 @@
 [Unit]
 Description=ovh-dyndns, update ovh dns record with public hostname.
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 User=ovh-dyndns
 Type=oneshot
 ExecStart=/usr/local/bin/ovh-dyndns
 
-[Install]
-WantedBy=multi-user.target
+# Hardening, this service only needs outbound network access and to read its
+# configuration files.
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+SystemCallFilter=@system-service

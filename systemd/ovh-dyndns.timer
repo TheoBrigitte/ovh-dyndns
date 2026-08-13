@@ -1,8 +1,9 @@
 [Unit]
-Description=Run ovh-dyndns every 6 hour.
+Description=Periodically update OVH DNS records.
 
 [Timer]
-OnUnitActiveSec=6h
+OnCalendar=*:0/10
+Persistent=true
 
 [Install]
 WantedBy=timers.target
