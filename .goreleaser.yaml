@@ -1,0 +1,39 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - flags:
+    - -v
+    ldflags:
+    - -s -w
+    - -X github.com/prometheus/common/version.Version={{.Version}}
+    - -X github.com/prometheus/common/version.Revision={{.FullCommit}}
+    - -X github.com/prometheus/common/version.Branch={{.Branch}}
+    - -X github.com/prometheus/common/version.BuildUser=goreleaser
+    - -X github.com/prometheus/common/version.BuildDate={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    binary: bin/ovh-dyndns
+
+archives:
+  - formats: ["binary"]
+
+changelog:
+  abbrev: 7
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  draft: true
