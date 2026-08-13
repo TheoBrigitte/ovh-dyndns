@@ -23,6 +23,8 @@ It retrieves the public IP address or hostname and updates the DNS record accord
 It runs once and exits, so it is meant to be triggered periodically, for example
 by the provided systemd timer.
 
+![Screenshot](./assets/screenshot.png)
+
 ## Public IP providers
 
 All providers below are queried in parallel, with a 30 seconds timeout. Each
