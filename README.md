@@ -6,8 +6,7 @@
 
   [![Go Reference](https://pkg.go.dev/badge/github.com/TheoBrigitte/ovh-dyndns.svg)](https://pkg.go.dev/github.com/TheoBrigitte/ovh-dyndns)
   [![ci](https://github.com/TheoBrigitte/ovh-dyndns/actions/workflows/ci.yaml/badge.svg)](https://github.com/TheoBrigitte/ovh-dyndns/actions/workflows/ci.yaml)
-  [![GitHub Release](https://img.shields.io/github/v/release/TheoBrigitte/ovh-dyndns)](https://github.com/TheoBrigitte/ovh-dyndns/releases/latest)
-  ![GitHub Downloads](https://img.shields.io/github/downloads/TheoBrigitte/ovh-dyndns/total)
+  [![GitHub Release](https://img.shields.io/github/v/release/TheoBrigitte/ovh-dyndns?color=brightgreen)](https://github.com/TheoBrigitte/ovh-dyndns/releases/latest)
   [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TheoBrigitte/ovh-dyndns/badge)](https://scorecard.dev/viewer/?uri=github.com/TheoBrigitte/ovh-dyndns)
 
 </div>
