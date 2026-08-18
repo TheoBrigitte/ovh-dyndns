@@ -119,9 +119,9 @@ func run(records []Record) {
 	for _, r := range records {
 		recordType := strings.ToUpper(r.RecordType)
 		fields := log.Fields{
-			"zone":        r.Zone,
 			"record-type": recordType,
 			"subdomains":  r.Subdomains,
+			"zone":        r.Zone,
 		}
 
 		// Resolve the target once per entry, all its sub domains share it.
@@ -158,7 +158,7 @@ func (l *lookup) target(recordType string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("reading public IPv4 address: %w", err)
 			}
-			log.WithFields(log.Fields{"ip": ipv4}).Info("Found public IPv4 address")
+			log.WithFields(log.Fields{"IP": ipv4}).Info("Found public IPv4 address")
 			l.ipv4 = ipv4
 		}
 
@@ -170,7 +170,7 @@ func (l *lookup) target(recordType string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("reading public IPv6 address: %w", err)
 			}
-			log.WithFields(log.Fields{"ip": ipv6}).Info("Found public IPv6 address")
+			log.WithFields(log.Fields{"IP": ipv6}).Info("Found public IPv6 address")
 			l.ipv6 = ipv6
 		}
 
@@ -202,9 +202,9 @@ func (l *lookup) target(recordType string) (string, error) {
 // then refreshes the DNS zone.
 func updateRecord(c client.Client, zone, recordType, subDomain, target string) error {
 	fields := log.Fields{
-		"zone":        zone,
 		"record-type": recordType,
 		"subdomain":   subDomain,
+		"zone":        zone,
 	}
 
 	// Find the dns record.
@@ -225,13 +225,13 @@ func updateRecord(c client.Client, zone, recordType, subDomain, target string) e
 			Target:    target,
 		}
 
-		fields["record"] = record
+		fields["IP"] = target
 		log.WithFields(fields).Info("Creating DNS record")
-		newRecord, err := c.CreateRecord(zone, record)
+		_, err = c.CreateRecord(zone, record)
 		if err != nil {
 			return fmt.Errorf("creating DNS record: %w", err)
 		}
-		fields["record"] = newRecord
+		fields["IP"] = target
 		log.WithFields(fields).Info("Successfully created DNS record")
 	} else {
 		// Read the dns record.
@@ -239,8 +239,8 @@ func updateRecord(c client.Client, zone, recordType, subDomain, target string) e
 		if err != nil {
 			return fmt.Errorf("reading DNS record: %w", err)
 		}
-		fields["ID"] = id
-		fields["record"] = record
+		fields["record-id"] = id
+		fields["IP"] = record.Target
 		log.WithFields(fields).Info("Found DNS record")
 
 		// Skip update when target is the same.
@@ -251,6 +251,7 @@ func updateRecord(c client.Client, zone, recordType, subDomain, target string) e
 
 		record.Target = target
 
+		fields["IP"] = record.Target
 		log.WithFields(fields).Info("Updating DNS record")
 		err = c.UpdateRecord(zone, id, *record)
 		if err != nil {
